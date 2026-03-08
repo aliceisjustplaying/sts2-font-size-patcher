@@ -3,6 +3,10 @@
 **/obj/
 patcher/StsFontRuntimeHelper/
 
+# Local configuration
+.env
+.env.local
+
 # Local game binaries and backups
 game_dlls/
 *.dll

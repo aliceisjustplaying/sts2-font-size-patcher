@@ -31,32 +31,30 @@ Make Slay the Spire 2 text significantly larger on Steam Deck with a generic pat
 - Suggested check:
 
 ```bash
-ssh deck@steamdeck.local "pgrep -af 'Slay the Spire 2|sts2|godot'"
+./scripts/check-running.sh
 ```
 
 ## Key Paths
 
-### Mac
+### Repo
 
-- Working folder: `/Users/USER/tmp/sts2ea1/`
-- Local game DLL copies: `/Users/USER/tmp/sts2ea1/game_dlls/`
-- Patcher project: `/Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/`
-- Main patcher source: `/Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/Program.cs`
-- IL dump helper: `/Users/USER/tmp/sts2ea1/findlabels/FL/`
-- Existing notes:
-  - `/Users/USER/.claude/projects/-Users-USER/memory/sts2-font-mod.md`
-  - `/Users/USER/.claude/projects/-Users-USER/handoff.md`
+- Working folder: `./`
+- Local game DLL copies: `./game_dlls/`
+- Patcher project: `./patcher/StsFontPatcher/`
+- Main patcher source: `./patcher/StsFontPatcher/Program.cs`
+- IL dump helper: `./findlabels/FL/`
+- Environment example: `./.env.example`
+- Helper scripts: `./scripts/`
 
 ### Steam Deck
 
-- SSH: `deck@steamdeck.local`
-- Password: `steamdeck`
-- Game root: `/home/deck/.steam/steam/steamapps/common/Slay the Spire 2/`
-- Game DLL dir: `/home/deck/.steam/steam/steamapps/common/Slay the Spire 2/data_sts2_linuxbsd_x86_64/`
-- Game DLL: `/home/deck/.steam/steam/steamapps/common/Slay the Spire 2/data_sts2_linuxbsd_x86_64/sts2.dll`
-- Godot C# runtime DLL: `/home/deck/.steam/steam/steamapps/common/Slay the Spire 2/data_sts2_linuxbsd_x86_64/GodotSharp.dll`
-- Logs: `/home/deck/.local/share/SlayTheSpire2/logs/godot.log`
-- Steam Cloud save root: `/home/deck/.local/share/Steam/userdata/58189749/2868840/remote/`
+- Put host/path values in `.env`, not in tracked files.
+- Recommended variables:
+  - `STS2_DECK_HOST`
+  - `STS2_GAME_DLL_DIR`
+  - `STS2_LOG_PATH`
+  - `STS2_LOCAL_DLL_DIR`
+  - `STS2_PATCH_SCALE`
 
 ## Game Architecture Findings
 
@@ -359,63 +357,54 @@ Latest intended patch stack:
 ### Rebuild / repatch locally
 
 ```bash
-cp /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll
-cp /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll
-dotnet run --project /Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/StsFontPatcher.csproj -- /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll
+./scripts/rebuild.sh
 ```
 
 Current deployed example:
 
 ```bash
-cp /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll
-cp /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll
-dotnet run --project /Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/StsFontPatcher.csproj -- /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll 1.25
+./scripts/rebuild.sh
 ```
 
 ### Deploy to Steam Deck
 
 ```bash
-scp -o StrictHostKeyChecking=no \
-  /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll \
-  /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll \
-  deck@steamdeck.local:'/home/deck/.steam/steam/steamapps/common/Slay the Spire 2/data_sts2_linuxbsd_x86_64/'
+./scripts/deploy.sh
 ```
 
 ### Fetch Deck log locally
 
 ```bash
-scp -o StrictHostKeyChecking=no \
-  deck@steamdeck.local:'/home/deck/.local/share/SlayTheSpire2/logs/godot.log' \
-  /Users/USER/tmp/sts2ea1/deck_godot.log
+./scripts/fetch-log.sh
 ```
 
 ### Quick log triage
 
 ```bash
-rg -n "Exception|ERROR|MethodAccess|NullReference|CharacterSelect|DescriptionLabel" /Users/USER/tmp/sts2ea1/deck_godot.log
+rg -n "Exception|ERROR|MethodAccess|NullReference|CharacterSelect|DescriptionLabel" ./deck_godot.log
 ```
 
 ### Inspect patched assemblies
 
 ```bash
-dotnet run --project /Users/USER/tmp/sts2ea1/findlabels/FL/FL.csproj
+dotnet run --project ./findlabels/FL/FL.csproj -- ./game_dlls/sts2.dll
 ```
 
 ## Files of Interest
 
 - Patcher source:
-  - `/Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/Program.cs`
+  - `./patcher/StsFontPatcher/Program.cs`
 
 - Original backups:
-  - `/Users/USER/tmp/sts2ea1/game_dlls/sts2.dll.bak`
-  - `/Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll.bak`
+  - `./game_dlls/sts2.dll.bak`
+  - `./game_dlls/GodotSharp.dll.bak`
 
 - Working local DLLs:
-  - `/Users/USER/tmp/sts2ea1/game_dlls/sts2.dll`
-  - `/Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll`
+  - `./game_dlls/sts2.dll`
+  - `./game_dlls/GodotSharp.dll`
 
 - Helper investigation dump:
-  - `/Users/USER/tmp/sts2ea1/findlabels_dump.txt`
+  - `./findlabels_dump.txt`
 
 ## What We Know For Sure
 

@@ -25,6 +25,18 @@ This is the current clean patch shape:
 - no `override.cfg`
 - debug footer now shows `[version + Font Patch 1.25x] [date]`
 
+## Configuration
+
+Copy `.env.example` to `.env` and adjust it for your machine:
+
+- `STS2_DECK_HOST`
+- `STS2_GAME_DLL_DIR`
+- `STS2_LOG_PATH`
+- `STS2_LOCAL_DLL_DIR`
+- `STS2_PATCH_SCALE`
+
+The helper scripts in `./scripts` read `.env` automatically.
+
 ## Current scale factor
 
 - `1.25x`
@@ -84,13 +96,10 @@ cp GodotSharp.dll GodotSharp.dll.orig
 
 ## Install
 
-From another machine:
+Use the repo helper:
 
 ```bash
-scp -o StrictHostKeyChecking=no \
-  sts2.dll \
-  GodotSharp.dll \
-  deck@steamdeck.local:'~/.steam/steam/steamapps/common/Slay\ the\ Spire\ 2/data_sts2_linuxbsd_x86_64/'
+./scripts/deploy.sh
 ```
 
 Then fully quit and relaunch the game.
@@ -104,37 +113,21 @@ If the game is running, ask before overwriting the live install.
 Suggested check:
 
 ```bash
-ssh deck@steamdeck.local "pgrep -af 'Slay the Spire 2|sts2|godot'"
+./scripts/check-running.sh
 ```
 
 ## Revert
 
 Either restore the backups:
 
-```bash
-cd ~/.steam/steam/steamapps/common/Slay\ the\ Spire\ 2/data_sts2_linuxbsd_x86_64/
-cp sts2.dll.orig sts2.dll
-cp GodotSharp.dll.orig GodotSharp.dll
-```
-
-Or use Steam's file verification.
+Restore the backups you made on the Deck, or use Steam's file verification.
 
 ## Rebuild the patch locally
-
-Working directory:
-
-- `/Users/USER/tmp/sts2ea1/`
-
-Patcher source:
-
-- `/Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/Program.cs`
 
 Rebuild:
 
 ```bash
-cp /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll
-cp /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll.bak /Users/USER/tmp/sts2ea1/game_dlls/GodotSharp.dll
-dotnet run --project /Users/USER/tmp/sts2ea1/patcher/StsFontPatcher/StsFontPatcher.csproj -- /Users/USER/tmp/sts2ea1/game_dlls/sts2.dll 1.25
+./scripts/rebuild.sh
 ```
 
 ## Repository contents
@@ -143,6 +136,8 @@ Tracked in git:
 
 - patcher source
 - helper inspection tool source
+- `.env.example`
+- helper scripts
 - project docs / notes
 
 Ignored in git:
