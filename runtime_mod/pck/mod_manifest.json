@@ -1,0 +1,7 @@
+{
+  "pck_name": "ZSts2FontSizeMod",
+  "name": "STS2 Font Size Mod",
+  "author": "aliceisjustplaying",
+  "description": "Increases font sizes across Slay the Spire 2 using Harmony runtime patches.",
+  "version": "0.1.0"
+}

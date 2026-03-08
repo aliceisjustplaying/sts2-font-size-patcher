@@ -1,0 +1,13 @@
+; Engine configuration file.
+; Minimal project used only to export the runtime mod .pck.
+
+config_version=5
+
+[application]
+
+config/name="ZSts2FontSizeMod"
+config/features=PackedStringArray("4.5")
+
+[rendering]
+
+renderer/rendering_method="mobile"

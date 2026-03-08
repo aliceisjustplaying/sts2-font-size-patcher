@@ -1,6 +1,8 @@
 # Build output
 **/bin/
 **/obj/
+**/.godot/
+**/project.binary
 patcher/StsFontRuntimeHelper/
 
 # Local configuration
