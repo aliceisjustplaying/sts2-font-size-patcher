@@ -1,141 +1,108 @@
 # Slay the Spire 2 Font Size Runtime Mod
 
-Last updated: 2026-03-08
+Font-size mod for Slay the Spire 2 on Steam Deck using the game's `mods/` folder.
 
-This repo tracks the `mods/`-loader version of the STS2 font-size patch.
+This repo is set up for the simple path:
+- clone it
+- tweak a few values
+- build
+- deploy to your Deck
 
-What it changes:
+For deeper notes, save migration, and troubleshooting, see [DETAILS.md](/Users/USER/tmp/sts2ea1/DETAILS.md). For maintainer-level notes, see [STS2_FONT_MOD_MASTER_NOTES.md](/Users/USER/tmp/sts2ea1/STS2_FONT_MOD_MASTER_NOTES.md).
+
+## What it changes
 
 - scales `MegaLabel`
 - scales `MegaRichTextLabel`
 - scales plain Godot `Label` / `RichTextLabel`
 - scales BBCode font-size paths in `Godot.RichTextLabel`
-- adds a footer-only bump for the version/build text
-- adds a patch-notes-only bump for the release notes screen
-- adds a preview-card-description-only bump for secondary card previews
+- adds extra bumps for:
+  - version/build footer text
+  - patch notes text
+  - secondary preview-card description text
 
-Current config defaults:
+## Quickstart
 
-- base scale: `1.20x`
-- debug footer extra: `0.50`
-- patch notes extra: `0.25`
-- preview card description extra: `0.20`
-
-## Repo layout
-
-- `runtime_mod/Sts2FontSizeMod/`
-  - Harmony runtime mod source
-- `runtime_mod/pck/`
-  - minimal Godot pack content for the mod loader
-- `runtime_mod/tools/`
-  - helper scripts for building and inspecting the `.pck`
-- `scripts/build-runtime-mod.sh`
-  - builds the mod DLL and `.pck`
-- `scripts/deploy-runtime-mod.sh`
-  - installs the mod into the Deck `mods/` folder
-- `scripts/package-runtime-mod.sh`
-  - zips the runtime-mod artifacts
-- `scripts/check-running.sh`
-  - checks whether STS2 is running on the target Deck
-- `scripts/fetch-log.sh`
-  - copies back the Deck Godot log for debugging
-
-## Configuration
-
-Copy `.env.example` to `.env` and adjust it for your machine.
-
-Current env vars used by the runtime-mod workflow:
-
-- `STS2_DECK_HOST`
-- `STS2_MODS_DIR`
-- `STS2_LOG_PATH`
-- `STS2_GODOT_EXPORTER`
-- `STS2_PATCH_SCALE`
-- `STS2_DEBUG_FOOTER_EXTRA_SCALE`
-- `STS2_PATCH_NOTES_EXTRA_SCALE`
-- `STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE`
-- `STS2_RUNNING_PATTERN`
-
-Quote any value that contains spaces.
-
-## Build
+1. Clone the repo.
+2. Copy `.env.example` to `.env`.
+3. Edit `.env` for your Deck and preferred font sizes.
+4. Build:
 
 ```bash
 ./scripts/build-runtime-mod.sh
 ```
 
-This produces build artifacts in `runtime_mod/build/`.
-
-The build script also renders the current `.env` scale values into `runtime_mod/build/font_size_config.json`.
-
-## Deploy
-
-```bash
-./scripts/deploy-runtime-mod.sh
-```
-
-The deploy helper refuses to overwrite files if STS2 is running.
-
-Suggested check:
+5. Make sure STS2 is closed on the Deck.
 
 ```bash
 ./scripts/check-running.sh
 ```
 
-## Modded save migration
-
-When STS2 runs through the mod loader, profile-scoped saves move into a separate modded namespace.
-
-Important distinction:
-
-- account-scoped files stay at the normal root
-  - `profile.save`
-  - `settings.save`
-- profile-scoped files move under `modded/profileN/`
-  - `progress.save`
-  - `prefs.save`
-  - `current_run.save`
-  - run history
-  - replays
-
-On Steam Deck, the two relevant roots are:
-
-- Steam cloud store:
-  - `~/.local/share/Steam/userdata/58189749/2868840/remote/`
-- local synced copy:
-  - `~/.local/share/SlayTheSpire2/steam/76561198018455477/`
-
-Validated migration flow:
+6. Deploy:
 
 ```bash
-remote_root="$HOME/.local/share/Steam/userdata/58189749/2868840/remote"
-local_root="$HOME/.local/share/SlayTheSpire2/steam/76561198018455477"
-
-stamp=$(date +%Y%m%d-%H%M%S)
-backup_dir="$HOME/tmp/sts2-save-backups/modded-migrate-$stamp"
-
-mkdir -p "$backup_dir"
-cp -a "$remote_root/modded" "$backup_dir/remote-modded-before"
-cp -a "$local_root/modded" "$backup_dir/local-modded-before"
-
-mkdir -p "$remote_root/modded/profile1" "$local_root/modded/profile1"
-
-rsync -a --delete "$remote_root/profile1/" "$remote_root/modded/profile1/"
-rsync -a --delete "$remote_root/profile1/" "$local_root/modded/profile1/"
-
-cp -a "$remote_root/profile.save" "$remote_root/profile.save.backup" "$remote_root/settings.save" "$remote_root/settings.save.backup" "$remote_root/modded/"
-cp -a "$local_root/profile.save" "$local_root/profile.save.backup" "$local_root/settings.save" "$local_root/settings.save.backup" "$local_root/modded/"
+./scripts/deploy-runtime-mod.sh
 ```
 
-Why both roots matter:
+7. Launch the game.
 
-- STS2 syncs cloud files into the local save directory on startup
-- copying only the cloud tree is not enough
-- the local modded profile tree must match too, or the next modded launch can regenerate a fresh blank `progress.save`
+## Values You Probably Want To Change
+
+In `.env`:
+
+- `STS2_PATCH_SCALE`
+  - main global text scale
+- `STS2_DEBUG_FOOTER_EXTRA_SCALE`
+  - extra bump for version/build footer text
+- `STS2_PATCH_NOTES_EXTRA_SCALE`
+  - extra bump for release notes text
+- `STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE`
+  - extra bump for the description text on secondary preview cards
+
+Current defaults:
+
+- `STS2_PATCH_SCALE=1.20`
+- `STS2_DEBUG_FOOTER_EXTRA_SCALE=0.50`
+- `STS2_PATCH_NOTES_EXTRA_SCALE=0.25`
+- `STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE=0.20`
+
+## Required `.env` Fields
+
+- `STS2_DECK_HOST`
+- `STS2_MODS_DIR`
+- `STS2_LOG_PATH`
+- `STS2_GODOT_EXPORTER`
+
+Quote values that contain spaces.
+
+## Useful Commands
+
+Build:
+
+```bash
+./scripts/build-runtime-mod.sh
+```
+
+Deploy:
+
+```bash
+./scripts/deploy-runtime-mod.sh
+```
+
+Check if the game is running:
+
+```bash
+./scripts/check-running.sh
+```
+
+Fetch the Deck log:
+
+```bash
+./scripts/fetch-log.sh
+```
 
 ## Notes
 
-- Engine: Godot 4.5.1 Mono
-- App ID: `2868840`
-- The game content `.pck` is encrypted, so asset extraction is not the current path.
-- The older direct-DLL patcher workflow has been archived outside this repo.
+- Build output goes to `runtime_mod/build/`.
+- `font_size_config.json` is generated from your current `.env` values during build.
+- The deploy script refuses to overwrite live mod files if STS2 is running.
