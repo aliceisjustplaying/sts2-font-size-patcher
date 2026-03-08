@@ -24,6 +24,7 @@ This is the current clean patch shape:
 - no helper DLL
 - no `override.cfg`
 - debug footer now shows `[version + Font Patch 1.20x] [date]`
+- patch notes body text gets an extra release-notes-only bump on top of the base scale
 
 ## Configuration
 
@@ -34,13 +35,17 @@ Copy `.env.example` to `.env` and adjust it for your machine:
 - `STS2_LOG_PATH`
 - `STS2_LOCAL_DLL_DIR`
 - `STS2_PATCH_SCALE`
+- `STS2_DEBUG_FOOTER_EXTRA_SCALE`
+- `STS2_PATCH_NOTES_EXTRA_SCALE`
 
 The helper scripts in `./scripts` read `.env` automatically.
+Quote any value that contains spaces, such as the Steam install path or process-match pattern.
 
 ## Current scale factor
 
 - `1.20x`
 - debug footer/version labels get an extra footer-only bump to `1.70x`
+- patch notes body text gets an extra release-notes-only bump to `1.45x`
 
 ## Why this version is better than the earlier attempts
 
@@ -64,6 +69,7 @@ The current version keeps the useful generic parts and removes the brittle parts
 - `NGame._Ready()` still scales plain Godot labels and rich-text labels globally
 - `GodotSharp.dll` still scales BBCode and direct rich-text size pushes globally
 - the version/build footer is patched through `NDebugInfoLabelManager.UpdateText(...)` so it uses the same scaled `MegaLabel` path
+- the patch notes screen body text is patched through `NPatchNotesScreen._patchText` so release notes can get a small extra bump without affecting other `MegaRichTextLabel` screens
 
 That means the patch now covers:
 

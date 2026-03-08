@@ -35,6 +35,9 @@ var targets = new HashSet<string>
     "MegaCrit.Sts2.Core.Nodes.Debug.NDebugInfoLabelManager::_Ready",
     "MegaCrit.Sts2.Core.Nodes.Debug.NDebugInfoLabelManager::_Input",
     "MegaCrit.Sts2.Core.Nodes.Debug.NDebugInfoLabelManager::SetCommitIdInEditor",
+    "MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen::LoadPatchNoteText",
+    "MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen::CreateNewPatchEntry",
+    "MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen::UpdateDateLabel",
     "MegaCrit.Sts2.Core.Nodes.Screens.RunHistoryScreen.NRunHistory::LoadTimeDetails",
     "MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NContinueRunInfo::ShowInfo"
 };

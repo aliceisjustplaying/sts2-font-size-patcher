@@ -1,16 +1,27 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.Globalization;
 
-if (args.Length < 1) { Console.WriteLine("Usage: dotnet run -- <path-to-sts2.dll> [scale-factor]"); return 1; }
+static double ParseDoubleArg(string[] values, int index, double defaultValue) =>
+    values.Length >= index + 1
+        ? double.Parse(values[index], CultureInfo.InvariantCulture)
+        : defaultValue;
+
+if (args.Length < 1) { Console.WriteLine("Usage: dotnet run -- <path-to-sts2.dll> [scale-factor] [debug-footer-extra-scale] [patch-notes-extra-scale]"); return 1; }
 var dllPath = args[0];
-var scaleFactor = args.Length >= 2 ? double.Parse(args[1]) : 1.75;
-var debugFooterScaleFactor = scaleFactor + 0.5;
+var scaleFactor = ParseDoubleArg(args, 1, 1.75);
+var debugFooterExtraScale = ParseDoubleArg(args, 2, 0.5);
+var patchNotesExtraScale = ParseDoubleArg(args, 3, 0.25);
+var debugFooterScaleFactor = scaleFactor + debugFooterExtraScale;
+var patchNotesScaleFactor = scaleFactor + patchNotesExtraScale;
 if (!File.Exists(dllPath)) { Console.WriteLine($"ERROR: File not found: {dllPath}"); return 1; }
 
 var backupPath = dllPath + ".bak";
 if (!File.Exists(backupPath)) { File.Copy(dllPath, backupPath); Console.WriteLine($"Backed up to: {backupPath}"); }
 
 Console.WriteLine($"Scale factor: {scaleFactor:F2}x");
+Console.WriteLine($"Debug footer extra scale: +{debugFooterExtraScale:F2}x");
+Console.WriteLine($"Patch notes extra scale: +{patchNotesExtraScale:F2}x");
 
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(dllPath))!);
@@ -276,6 +287,77 @@ foreach (var cls in new[] { "MegaCrit.Sts2.addons.mega_text.MegaLabel", "MegaCri
                 il.InsertBefore(renderStart, il.Create(OpCodes.Br, continueAt));
 
                 Console.WriteLine("PATCH 1C: NDebugInfoLabelManager.UpdateText footer text");
+                patchCount++;
+            }
+        }
+    }
+}
+
+// PATCH 1D: Patch notes screen body text — apply an extra MegaRichTextLabel bump
+{
+    var megaRtlType = module.Types.FirstOrDefault(t => t.FullName == "MegaCrit.Sts2.addons.mega_text.MegaRichTextLabel");
+    var patchNotesType = module.Types.FirstOrDefault(t => t.FullName == "MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen");
+
+    if (megaRtlType != null && patchNotesType != null)
+    {
+        var applyPatchNotesFont = patchNotesType.Methods.FirstOrDefault(m => m.Name == "_ApplyPatchNotesFont" && m.Parameters.Count == 1);
+        if (applyPatchNotesFont == null)
+        {
+            applyPatchNotesFont = new MethodDefinition("_ApplyPatchNotesFont",
+                Mono.Cecil.MethodAttributes.Private | Mono.Cecil.MethodAttributes.Static | Mono.Cecil.MethodAttributes.HideBySig,
+                module.TypeSystem.Void);
+            applyPatchNotesFont.Parameters.Add(new ParameterDefinition("label", Mono.Cecil.ParameterAttributes.None, module.ImportReference(megaRtlType)));
+
+            var il = applyPatchNotesFont.Body.GetILProcessor();
+            var done = il.Create(OpCodes.Ret);
+
+            void AppendPatchNotesOverride(string prop)
+            {
+                il.Append(il.Create(OpCodes.Ldarg_0));
+                il.Append(il.Create(OpCodes.Ldstr, prop));
+                il.Append(il.Create(OpCodes.Call, snImplicit));
+                il.Append(il.Create(OpCodes.Ldarg_0));
+                il.Append(il.Create(OpCodes.Ldstr, prop));
+                il.Append(il.Create(OpCodes.Call, snImplicit));
+                il.Append(il.Create(OpCodes.Ldstr, "RichTextLabel"));
+                il.Append(il.Create(OpCodes.Call, snImplicit));
+                il.Append(il.Create(OpCodes.Callvirt, getThemeFontSize));
+                il.Append(il.Create(OpCodes.Conv_R8));
+                il.Append(il.Create(OpCodes.Ldc_R8, patchNotesScaleFactor));
+                il.Append(il.Create(OpCodes.Mul));
+                il.Append(il.Create(OpCodes.Conv_I4));
+                il.Append(il.Create(OpCodes.Callvirt, addThemeFontSizeOverride));
+            }
+
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Brfalse, done));
+            AppendPatchNotesOverride("normal_font_size");
+            AppendPatchNotesOverride("bold_font_size");
+            AppendPatchNotesOverride("italics_font_size");
+            AppendPatchNotesOverride("bold_italics_font_size");
+            AppendPatchNotesOverride("mono_font_size");
+            il.Append(done);
+
+            patchNotesType.Methods.Add(applyPatchNotesFont);
+        }
+
+        var createNewPatchEntry = patchNotesType.Methods.FirstOrDefault(m => m.Name == "CreateNewPatchEntry" && m.HasBody);
+        if (createNewPatchEntry != null)
+        {
+            var patchTextField = patchNotesType.Fields.FirstOrDefault(f => f.Name == "_patchText");
+            var loadPatchNoteTextCall = createNewPatchEntry.Body.Instructions.FirstOrDefault(i =>
+                i.OpCode == OpCodes.Call &&
+                i.Operand is MethodReference mr &&
+                mr.Name == "LoadPatchNoteText");
+
+            if (patchTextField != null && loadPatchNoteTextCall != null)
+            {
+                var il = createNewPatchEntry.Body.GetILProcessor();
+                il.InsertBefore(loadPatchNoteTextCall, il.Create(OpCodes.Ldarg_0));
+                il.InsertBefore(loadPatchNoteTextCall, il.Create(OpCodes.Ldfld, patchTextField));
+                il.InsertBefore(loadPatchNoteTextCall, il.Create(OpCodes.Call, applyPatchNotesFont));
+
+                Console.WriteLine("PATCH 1D: NPatchNotesScreen.CreateNewPatchEntry patch notes font override");
                 patchCount++;
             }
         }

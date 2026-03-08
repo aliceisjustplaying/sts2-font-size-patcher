@@ -13,6 +13,7 @@ Make Slay the Spire 2 text significantly larger on Steam Deck with a generic pat
 - The patch is now mostly generic, not primarily screen-specific.
 - Current deployed base scale factor is `1.20x`.
 - Debug footer/version labels get a footer-only scale of `1.70x`.
+- Patch notes body text gets a release-notes-only scale of `1.45x`.
 - Patched `sts2.dll` and `GodotSharp.dll` were rebuilt on 2026-03-08 and copied to the Deck.
 - The earlier character-select-only fix has been replaced by a broader `MegaLabel` / `MegaRichTextLabel` `_Ready()` patch.
 - The debug footer/version display is now patched to show:
@@ -56,6 +57,8 @@ Make Slay the Spire 2 text significantly larger on Steam Deck with a generic pat
   - `STS2_LOG_PATH`
   - `STS2_LOCAL_DLL_DIR`
   - `STS2_PATCH_SCALE`
+  - `STS2_DEBUG_FOOTER_EXTRA_SCALE`
+  - `STS2_PATCH_NOTES_EXTRA_SCALE`
 
 ## Game Architecture Findings
 
@@ -115,6 +118,27 @@ Relevant decompile finding:
   - `_description.Text = new LocString("characters", characterModel.CharacterSelectDesc).GetFormattedText();`
 
 So the stubborn serif text is the character bio/description label on character select, not a random unrelated UI path.
+
+## Release Notes Text Investigation
+
+The patch notes / release notes screen uses:
+
+- screen: `MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen`
+- body field: `_patchText`
+- body type: `MegaRichTextLabel`
+- date field: `_dateLabel`
+- date type: `MegaLabel`
+
+Relevant managed behavior:
+
+- `CreateNewPatchEntry(...)` binds `_patchText` from `Content/PatchText`
+- `LoadPatchNoteText(...)` reads the patch note file and calls `_patchText.SetTextAutoSize(...)`
+- `UpdateDateLabel(...)` sets `_dateLabel.SetTextAutoSize(...)`
+
+Conclusion:
+
+- yes, release notes were already on the generic scaled `MegaRichTextLabel` path
+- an additional release-notes-only bump can therefore be applied generically at the screen level without chasing strings
 
 ## Important Decompiled Behavior
 
@@ -246,6 +270,30 @@ What was found:
 Conclusion:
 
 - the right fix was to make `MegaRichTextLabel` scaling generic instead of continuing to chase individual screens
+
+### 7. Patch 1D: Generic release-notes body bump on `NPatchNotesScreen`
+
+Implemented in `sts2.dll`:
+
+- `MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NPatchNotesScreen::_ApplyPatchNotesFont(...)`
+- call injected into `CreateNewPatchEntry(...)`
+
+Behavior:
+
+- applies a release-notes-only rich-text size override to `_patchText`
+- scales:
+  - `normal_font_size`
+  - `bold_font_size`
+  - `italics_font_size`
+  - `bold_italics_font_size`
+  - `mono_font_size`
+- uses `base scale + STS2_PATCH_NOTES_EXTRA_SCALE`
+
+Result:
+
+- release notes text keeps the generic path
+- the extra bump is configurable in `.env`
+- no string-specific patching is needed
 
 ### 6. Patch 1B: Generic `_Ready()` scaling for `MegaLabel` and `MegaRichTextLabel`
 
