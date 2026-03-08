@@ -22,6 +22,12 @@ For deeper notes, save migration, and troubleshooting, see [GUIDE.md](GUIDE.md).
   - secondary preview-card description text
 - covers the shared character-select starter-relic description path
 
+## Example
+
+| Before (`1.0x`) | After (`1.2x`) |
+| --- | --- |
+| ![Combat tooltip before the font-size mod](screenshots/before-combat-tooltip-1x.jpg) | ![Combat tooltip after the font-size mod](screenshots/after-combat-tooltip-1_2x.jpg) |
+
 ## Quickstart
 
 1. Clone the repo.
