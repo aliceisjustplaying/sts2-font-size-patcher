@@ -1,4 +1,4 @@
-# Details
+# Guide
 
 More complete user-facing notes for the STS2 font-size runtime mod.
 
