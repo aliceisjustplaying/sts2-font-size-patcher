@@ -8,7 +8,7 @@ This repo is set up for the simple path:
 - build
 - deploy to your Deck
 
-For deeper notes, save migration, and troubleshooting, see [GUIDE.md](/Users/USER/tmp/sts2ea1/GUIDE.md). For maintainer-level notes, see [STS2_FONT_MOD_MASTER_NOTES.md](/Users/USER/tmp/sts2ea1/STS2_FONT_MOD_MASTER_NOTES.md).
+For deeper notes, save migration, and troubleshooting, see [GUIDE.md](GUIDE.md). For maintainer-level notes, see [STS2_FONT_MOD_MASTER_NOTES.md](STS2_FONT_MOD_MASTER_NOTES.md).
 
 ## What it changes
 
