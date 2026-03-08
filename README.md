@@ -23,7 +23,7 @@ This is the current clean patch shape:
 - patched `GodotSharp.dll`
 - no helper DLL
 - no `override.cfg`
-- debug footer now shows `[version + Font Patch 1.25x] [date]`
+- debug footer now shows `[version + Font Patch 1.20x] [date]`
 
 ## Configuration
 
@@ -39,7 +39,8 @@ The helper scripts in `./scripts` read `.env` automatically.
 
 ## Current scale factor
 
-- `1.25x`
+- `1.20x`
+- debug footer/version labels get an extra footer-only bump to `1.70x`
 
 ## Why this version is better than the earlier attempts
 

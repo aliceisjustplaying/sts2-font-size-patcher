@@ -11,11 +11,12 @@ Make Slay the Spire 2 text significantly larger on Steam Deck with a generic pat
 - The game currently launches.
 - Character select currently works.
 - The patch is now mostly generic, not primarily screen-specific.
-- Current deployed scale factor is `1.25x`.
+- Current deployed base scale factor is `1.20x`.
+- Debug footer/version labels get a footer-only scale of `1.70x`.
 - Patched `sts2.dll` and `GodotSharp.dll` were rebuilt on 2026-03-08 and copied to the Deck.
 - The earlier character-select-only fix has been replaced by a broader `MegaLabel` / `MegaRichTextLabel` `_Ready()` patch.
 - The debug footer/version display is now patched to show:
-  - `[version + Font Patch 1.25x] [date]`
+  - `[version + Font Patch 1.20x] [date]`
 - The original stubborn serif text was identified as the character description text, including:
   - `"The last soldier of the Ironclads."`
 - Additional remaining misses that revealed the pattern included:
@@ -281,7 +282,8 @@ Behavior:
 
 - routes the footer text through `MegaLabel.SetTextAutoSize(...)` instead of plain `Label.set_Text(...)`
 - formats the first line as:
-  - `[version + Font Patch 1.25x] [date]`
+  - `[version + Font Patch 1.20x] [date]`
+- applies a footer-only font bump to the release/build labels
 
 Why it matters:
 

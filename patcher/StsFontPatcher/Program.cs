@@ -4,6 +4,7 @@ using Mono.Cecil.Cil;
 if (args.Length < 1) { Console.WriteLine("Usage: dotnet run -- <path-to-sts2.dll> [scale-factor]"); return 1; }
 var dllPath = args[0];
 var scaleFactor = args.Length >= 2 ? double.Parse(args[1]) : 1.75;
+var debugFooterScaleFactor = scaleFactor + 0.5;
 if (!File.Exists(dllPath)) { Console.WriteLine($"ERROR: File not found: {dllPath}"); return 1; }
 
 var backupPath = dllPath + ".bak";
@@ -167,6 +168,7 @@ foreach (var cls in new[] { "MegaCrit.Sts2.addons.mega_text.MegaLabel", "MegaCri
     if (debugInfoType != null && setTextAutoSize != null)
     {
         var formatFooter = debugInfoType.Methods.FirstOrDefault(m => m.Name == "_FormatFontPatchFooter" && m.Parameters.Count == 2);
+        var applyFooterFont = debugInfoType.Methods.FirstOrDefault(m => m.Name == "_ApplyDebugFooterFont" && m.Parameters.Count == 1);
         if (formatFooter == null)
         {
             formatFooter = new MethodDefinition("_FormatFontPatchFooter",
@@ -186,6 +188,62 @@ foreach (var cls in new[] { "MegaCrit.Sts2.addons.mega_text.MegaLabel", "MegaCri
             il.Append(il.Create(OpCodes.Ret));
 
             debugInfoType.Methods.Add(formatFooter);
+        }
+
+        if (applyFooterFont == null)
+        {
+            applyFooterFont = new MethodDefinition("_ApplyDebugFooterFont",
+                Mono.Cecil.MethodAttributes.Private | Mono.Cecil.MethodAttributes.Static | Mono.Cecil.MethodAttributes.HideBySig,
+                module.TypeSystem.Void);
+            applyFooterFont.Parameters.Add(new ParameterDefinition("label", Mono.Cecil.ParameterAttributes.None, module.ImportReference(megaLabelType)));
+            applyFooterFont.Body.InitLocals = true;
+
+            var il = applyFooterFont.Body.GetILProcessor();
+            var done = il.Create(OpCodes.Ret);
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Brfalse, done));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldstr, "font_size"));
+            il.Append(il.Create(OpCodes.Call, snImplicit));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldstr, "font_size"));
+            il.Append(il.Create(OpCodes.Call, snImplicit));
+            il.Append(il.Create(OpCodes.Ldstr, "Label"));
+            il.Append(il.Create(OpCodes.Call, snImplicit));
+            il.Append(il.Create(OpCodes.Callvirt, getThemeFontSize));
+            il.Append(il.Create(OpCodes.Conv_R8));
+            il.Append(il.Create(OpCodes.Ldc_R8, debugFooterScaleFactor));
+            il.Append(il.Create(OpCodes.Mul));
+            il.Append(il.Create(OpCodes.Conv_I4));
+            il.Append(il.Create(OpCodes.Callvirt, addThemeFontSizeOverride));
+            il.Append(done);
+
+            debugInfoType.Methods.Add(applyFooterFont);
+        }
+
+        var ready = debugInfoType.Methods.FirstOrDefault(m => m.Name == "_Ready" && m.HasBody);
+        if (ready != null)
+        {
+            var releaseInfoField = debugInfoType.Fields.FirstOrDefault(f => f.Name == "_releaseInfo");
+            var seedField = debugInfoType.Fields.FirstOrDefault(f => f.Name == "_seed");
+            var updateTextCall = ready.Body.Instructions.FirstOrDefault(i =>
+                i.OpCode == OpCodes.Call &&
+                i.Operand is MethodReference mr &&
+                mr.Name == "UpdateText");
+
+            if (releaseInfoField != null && seedField != null && updateTextCall != null)
+            {
+                var il = ready.Body.GetILProcessor();
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Ldarg_0));
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Ldfld, releaseInfoField));
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Call, applyFooterFont));
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Ldarg_0));
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Ldfld, seedField));
+                il.InsertBefore(updateTextCall, il.Create(OpCodes.Call, applyFooterFont));
+
+                Console.WriteLine("PATCH 1C: NDebugInfoLabelManager._Ready footer font override");
+                patchCount++;
+            }
         }
 
         var updateText = debugInfoType.Methods.FirstOrDefault(m => m.Name == "UpdateText" && m.Parameters.Count == 1 && m.HasBody);
