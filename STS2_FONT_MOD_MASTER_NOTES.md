@@ -178,3 +178,60 @@ Suggested check:
 - Main managed gameplay assembly: `sts2.dll`
 - Godot managed runtime assembly: `GodotSharp.dll`
 - The `.pck` is encrypted, so direct scene/theme/resource editing through asset extraction is not a practical path right now.
+
+## Investigation History
+
+### Early Direct-DLL Phase
+
+- The project started as a direct patch of `sts2.dll`, then briefly also `GodotSharp.dll`.
+- That approach proved the font-scaling concept, but it was a poor sharing format because it replaced core game DLLs directly.
+- The old direct-DLL source was intentionally removed from the public repo after the runtime-mod port became viable.
+
+### Failed Global Godot Helper Injection
+
+- An early attempt patched `GodotSharp.dll` to call into a separate helper assembly.
+- That failed at runtime because Godot's C# startup did not load the extra helper assembly reliably.
+- Result: `FileNotFoundException` spam and unstable menus.
+- Lesson: any engine-level patch must be self-contained, or better, moved into the runtime-mod/Harmony path.
+
+### Why The Runtime Mod Became The Main Path
+
+- The `mods/` loader path avoids replacing stock game DLLs.
+- It is easier to share, easier to tweak, and safer to revert.
+- The price is that modded runs use a separate save namespace, which had to be understood and documented.
+
+### Save Namespace Learning
+
+- The mod loader does not wipe the normal save.
+- Instead, it switches profile-scoped data into `modded/profile1/...` while leaving account-scoped files at the normal root.
+- The first failed migrations happened because only part of that modded namespace was copied.
+- The durable lesson is: copy both the cloud and local modded profile trees, plus the top-level `profile.save` and `settings.save`.
+
+### Autosizing Was The Real "Why Is This One Still Tiny?" Pattern
+
+- Most of the remaining stubborn misses were not separate font systems.
+- They were usually `MegaLabel` / `MegaRichTextLabel` nodes that still used autosizing.
+- Scaling only the base font size was not enough for longer text, because autosizing could shrink it back toward the original bounds.
+- The generic fix was to scale autosize bounds as well, not just the visible base size.
+
+### Not Every Miss Was The Same UI Path
+
+- The character-select stubborn serif text was a real targeted path and helped identify where generic scaling was missing.
+- Timeline unlock / inspect text turned out to involve dedicated timeline screens and a mix of text node types.
+- Secondary preview-card text needed its own extra bump because the desired result was different from the main card presentation.
+- Lesson: keep the base patch generic, but allow a small number of explicit extras for UX-sensitive screens.
+
+### Rejected Paths
+
+- Global display scaling via `override.cfg`
+  - too blunt, affected the wrong things, and was not the right solution
+- Relying on encrypted asset extraction
+  - not practical because the game `.pck` is encrypted
+- Shipping the direct-DLL patcher as the final public solution
+  - workable locally, but a worse distribution format than the runtime mod
+
+### Documentation Intent
+
+- `README.md` is intentionally short and task-oriented.
+- `GUIDE.md` is for user-facing detail like save migration and troubleshooting.
+- This file keeps the higher-level technical lessons and rejected paths so the reasoning is not lost.

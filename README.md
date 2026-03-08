@@ -1,6 +1,6 @@
 # Slay the Spire 2 Font Size Runtime Mod
 
-Font-size mod for Slay the Spire 2 on Steam Deck using the game's `mods/` folder.
+Slay the Spire 2 has a lot of text that is too small on Steam Deck. This mod makes the game broadly more readable by scaling the main UI text paths and adding a few targeted bumps for the stubborn tiny holdouts.
 
 This repo is set up for the simple path:
 - clone it
