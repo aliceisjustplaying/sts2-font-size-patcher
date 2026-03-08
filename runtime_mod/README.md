@@ -24,6 +24,7 @@ The runtime mod currently ports these patch areas:
 - `NDebugInfoLabelManager` footer text + footer bump
 - `NPatchNotesScreen` release notes bump
 - `NPreviewCardHolder` preview-card description extra bump
+- `NCharacterSelectScreen` starter-relic description fix after character switch
 
 ## Config
 

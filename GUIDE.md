@@ -125,6 +125,13 @@ Current known scale defaults:
 - patch notes extra: `0.25`
 - preview card description extra: `0.20`
 
+Notable covered holdouts:
+
+- character-select bio text
+- character-select starter-relic description text
+- patch notes body text
+- secondary preview-card description text
+
 ## Notes
 
 - Engine: Godot 4.5.1 Mono

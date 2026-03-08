@@ -5,6 +5,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Debug;
+using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.addons.mega_text;
 
@@ -16,6 +17,7 @@ public static class FontScaleState
     private const string FooterScaledMetaKey = "zsts2_font_footer_scaled";
     private const string PatchNotesScaledMetaKey = "zsts2_font_patch_notes_scaled";
     private const string PreviewCardDescriptionScaledMetaKey = "zsts2_font_preview_card_description_scaled";
+    private const string CharacterSelectRelicDescriptionScaledMetaKey = "zsts2_font_character_select_relic_description_scaled";
 
     private static readonly Regex FontSizeRegex = new(@"(?<=\bfont_size=)\d+", RegexOptions.Compiled);
     private static readonly Regex OutlineSizeRegex = new(@"(?<=\boutline_size=)\d+", RegexOptions.Compiled);
@@ -31,6 +33,8 @@ public static class FontScaleState
         AccessTools.Field(typeof(NPatchNotesScreen), "_patchText");
     private static readonly FieldInfo? CardDescriptionField =
         AccessTools.Field(typeof(NCard), "_descriptionLabel");
+    private static readonly FieldInfo? CharacterSelectRelicDescriptionField =
+        AccessTools.Field(typeof(NCharacterSelectScreen), "_relicDescription");
     private static readonly FieldInfo? MegaRichTextMinField =
         AccessTools.Field(typeof(MegaRichTextLabel), "_minFontSize");
     private static readonly FieldInfo? MegaRichTextMaxField =
@@ -126,6 +130,20 @@ public static class FontScaleState
         }
 
         label.SetMeta(PreviewCardDescriptionScaledMetaKey, true);
+    }
+
+    public static void ApplyCharacterSelectRelicDescriptionFix(NCharacterSelectScreen screen)
+    {
+        var label = GetFieldValue<MegaRichTextLabel>(CharacterSelectRelicDescriptionField, screen);
+        if (label == null || HasMeta(label, CharacterSelectRelicDescriptionScaledMetaKey))
+        {
+            return;
+        }
+
+        ApplyMegaRichTextBase(label);
+        label.AutoSizeEnabled = false;
+        label.Text = label.Text;
+        label.SetMeta(CharacterSelectRelicDescriptionScaledMetaKey, true);
     }
 
     public static void RewriteFooterText(NDebugInfoLabelManager manager)

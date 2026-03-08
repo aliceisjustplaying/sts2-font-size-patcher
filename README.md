@@ -20,6 +20,7 @@ For deeper notes, save migration, and troubleshooting, see [GUIDE.md](GUIDE.md).
   - version/build footer text
   - patch notes text
   - secondary preview-card description text
+- covers the shared character-select starter-relic description path
 
 ## Quickstart
 

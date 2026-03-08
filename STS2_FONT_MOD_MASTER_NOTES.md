@@ -27,6 +27,9 @@ The older direct-DLL patcher source has been archived outside the repo.
 - Preview-card description text gets a preview-only extra scale of `1.40x`.
 - The original stubborn serif text was identified as the character description text:
   - `"The last soldier of the Ironclads."`
+- Character-select starter-relic description text is now explicitly reapplied after `NCharacterSelectScreen.SelectCharacter(...)`.
+- This shared character-select fix covers cases like:
+  - `"At the start of each combat, draw 2 additional cards."`
 - Additional probe strings that helped identify remaining paths were:
   - `"..arise.. my.. warrior..."`
   - `"Until next turn, prevents damage."`
@@ -217,6 +220,7 @@ Suggested check:
 ### Not Every Miss Was The Same UI Path
 
 - The character-select stubborn serif text was a real targeted path and helped identify where generic scaling was missing.
+- Character-select starter-relic text turned out to be a sibling shared label path, not the main bio label.
 - Timeline unlock / inspect text turned out to involve dedicated timeline screens and a mix of text node types.
 - Secondary preview-card text needed its own extra bump because the desired result was different from the main card presentation.
 - Lesson: keep the base patch generic, but allow a small number of explicit extras for UX-sensitive screens.
