@@ -21,9 +21,10 @@ The older direct-DLL patcher source has been archived outside the repo.
 
 - The runtime mod loads through the `mods/` folder.
 - The modded save namespace is now understood and documented.
-- Current deployed base scale factor is `1.20x`.
+- Current runtime-mod config target base scale factor is `1.20x`.
 - Debug footer/version labels get a footer-only scale of `1.70x`.
 - Patch notes body text gets a release-notes-only scale of `1.45x`.
+- Preview-card description text gets a preview-only extra scale of `1.40x`.
 - The original stubborn serif text was identified as the character description text:
   - `"The last soldier of the Ironclads."`
 - Additional probe strings that helped identify remaining paths were:
@@ -155,6 +156,7 @@ Suggested check:
 - Mod tools: `./runtime_mod/tools/`
 - Environment example: `./.env.example`
 - Helper scripts: `./scripts/`
+- Generated runtime config after build: `./runtime_mod/build/font_size_config.json`
 
 ### Steam Deck
 
@@ -167,6 +169,7 @@ Suggested check:
   - `STS2_PATCH_SCALE`
   - `STS2_DEBUG_FOOTER_EXTRA_SCALE`
   - `STS2_PATCH_NOTES_EXTRA_SCALE`
+  - `STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE`
 
 ## Game Architecture Findings
 

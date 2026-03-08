@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Debug;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.addons.mega_text;
@@ -14,6 +15,7 @@ public static class FontScaleState
     private const string ScaledMetaKey = "zsts2_font_scaled";
     private const string FooterScaledMetaKey = "zsts2_font_footer_scaled";
     private const string PatchNotesScaledMetaKey = "zsts2_font_patch_notes_scaled";
+    private const string PreviewCardDescriptionScaledMetaKey = "zsts2_font_preview_card_description_scaled";
 
     private static readonly Regex FontSizeRegex = new(@"(?<=\bfont_size=)\d+", RegexOptions.Compiled);
     private static readonly Regex OutlineSizeRegex = new(@"(?<=\boutline_size=)\d+", RegexOptions.Compiled);
@@ -27,6 +29,12 @@ public static class FontScaleState
         AccessTools.Field(typeof(NDebugInfoLabelManager), "_seed");
     private static readonly FieldInfo? PatchTextField =
         AccessTools.Field(typeof(NPatchNotesScreen), "_patchText");
+    private static readonly FieldInfo? CardDescriptionField =
+        AccessTools.Field(typeof(NCard), "_descriptionLabel");
+    private static readonly FieldInfo? MegaRichTextMinField =
+        AccessTools.Field(typeof(MegaRichTextLabel), "_minFontSize");
+    private static readonly FieldInfo? MegaRichTextMaxField =
+        AccessTools.Field(typeof(MegaRichTextLabel), "_maxFontSize");
 
     private static MegaCrit.Sts2.Core.Logging.Logger? _logger;
 
@@ -65,6 +73,7 @@ public static class FontScaleState
             return;
         }
 
+        ScaleMegaAutoSizeBounds(label);
         ApplyThemeOverride(label, "font_size", "Label", Config.BaseScale);
         label.SetMeta(ScaledMetaKey, true);
     }
@@ -76,6 +85,7 @@ public static class FontScaleState
             return;
         }
 
+        ScaleMegaAutoSizeBounds(label);
         ApplyRichTextOverrides(label, Config.BaseScale);
         label.SetMeta(ScaledMetaKey, true);
     }
@@ -96,6 +106,26 @@ public static class FontScaleState
 
         ApplyRichTextOverrides(label, Config.PatchNotesScale);
         label.SetMeta(PatchNotesScaledMetaKey, true);
+    }
+
+    public static void ApplyPreviewCardDescriptionExtras(NCard card)
+    {
+        var label = GetFieldValue<MegaRichTextLabel>(CardDescriptionField, card);
+        if (label == null || HasMeta(label, PreviewCardDescriptionScaledMetaKey))
+        {
+            return;
+        }
+
+        ApplyMegaRichTextBase(label);
+
+        var ratio = GetAdditionalRatio(Config.PreviewCardDescriptionScale);
+        if (ratio > 1.0)
+        {
+            ApplyRichTextOverrides(label, ratio);
+            ScaleMegaRichTextBoundsDirect(label, ratio);
+        }
+
+        label.SetMeta(PreviewCardDescriptionScaledMetaKey, true);
     }
 
     public static void RewriteFooterText(NDebugInfoLabelManager manager)
@@ -215,6 +245,59 @@ public static class FontScaleState
         ApplyThemeOverride(control, "italics_font_size", "RichTextLabel", factor);
         ApplyThemeOverride(control, "bold_italics_font_size", "RichTextLabel", factor);
         ApplyThemeOverride(control, "mono_font_size", "RichTextLabel", factor);
+    }
+
+    private static void ScaleMegaAutoSizeBounds(MegaLabel label)
+    {
+        if (label.MinFontSize > 0)
+        {
+            label.MinFontSize = label.MinFontSize;
+        }
+
+        if (label.MaxFontSize > 0)
+        {
+            label.MaxFontSize = label.MaxFontSize;
+        }
+    }
+
+    private static void ScaleMegaRichTextBoundsDirect(MegaRichTextLabel label, double factor)
+    {
+        ScaleFieldDirect(MegaRichTextMinField, label, factor);
+        ScaleFieldDirect(MegaRichTextMaxField, label, factor);
+        label.SetTextAutoSize(label.Text);
+    }
+
+    private static void ScaleFieldDirect(FieldInfo? field, object instance, double factor)
+    {
+        if (field?.GetValue(instance) is not int value || value <= 0)
+        {
+            return;
+        }
+
+        field.SetValue(instance, Scale(value, factor));
+    }
+
+    private static double GetAdditionalRatio(double totalFactor)
+    {
+        if (Config.BaseScale <= 0)
+        {
+            return totalFactor;
+        }
+
+        return totalFactor / Config.BaseScale;
+    }
+
+    private static void ScaleMegaAutoSizeBounds(MegaRichTextLabel label)
+    {
+        if (label.MinFontSize > 0)
+        {
+            label.MinFontSize = label.MinFontSize;
+        }
+
+        if (label.MaxFontSize > 0)
+        {
+            label.MaxFontSize = label.MaxFontSize;
+        }
     }
 
     private static void ApplyThemeOverride(Control control, string propertyName, string themeType, double factor)

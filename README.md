@@ -12,12 +12,14 @@ What it changes:
 - scales BBCode font-size paths in `Godot.RichTextLabel`
 - adds a footer-only bump for the version/build text
 - adds a patch-notes-only bump for the release notes screen
+- adds a preview-card-description-only bump for secondary card previews
 
 Current config defaults:
 
 - base scale: `1.20x`
 - debug footer extra: `0.50`
 - patch notes extra: `0.25`
+- preview card description extra: `0.20`
 
 ## Repo layout
 
@@ -51,6 +53,7 @@ Current env vars used by the runtime-mod workflow:
 - `STS2_PATCH_SCALE`
 - `STS2_DEBUG_FOOTER_EXTRA_SCALE`
 - `STS2_PATCH_NOTES_EXTRA_SCALE`
+- `STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE`
 - `STS2_RUNNING_PATTERN`
 
 Quote any value that contains spaces.
@@ -62,6 +65,8 @@ Quote any value that contains spaces.
 ```
 
 This produces build artifacts in `runtime_mod/build/`.
+
+The build script also renders the current `.env` scale values into `runtime_mod/build/font_size_config.json`.
 
 ## Deploy
 

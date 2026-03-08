@@ -23,6 +23,7 @@ The runtime mod currently ports these patch areas:
 - `Godot.RichTextLabel` BBCode and direct size-push scaling
 - `NDebugInfoLabelManager` footer text + footer bump
 - `NPatchNotesScreen` release notes bump
+- `NPreviewCardHolder` preview-card description extra bump
 
 ## Config
 
@@ -33,6 +34,7 @@ Current defaults:
 - `base_scale`: `1.20`
 - `debug_footer_extra_scale`: `0.50`
 - `patch_notes_extra_scale`: `0.25`
+- `preview_card_description_extra_scale`: `0.20`
 
 ## Build
 
@@ -47,6 +49,8 @@ This produces:
 - `runtime_mod/build/ZSts2FontSizeMod.dll`
 - `runtime_mod/build/font_size_config.json`
 - `runtime_mod/build/ZSts2FontSizeMod.pck`
+
+`font_size_config.json` is rendered from the current `.env` values during the build.
 
 ## Deploy
 

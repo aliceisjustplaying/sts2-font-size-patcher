@@ -2,6 +2,8 @@ using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.addons.mega_text;
 
 namespace ZSts2FontSizeMod.Patches;
@@ -13,11 +15,39 @@ public static class MegaLabelSetFontSizePatch
     private static void Prefix(ref int size) => size = FontScaleState.Scale(size);
 }
 
+[HarmonyPatch(typeof(MegaLabel), "set_MinFontSize")]
+public static class MegaLabelSetMinFontSizePatch
+{
+    [HarmonyPrefix]
+    private static void Prefix(ref int value) => value = FontScaleState.Scale(value);
+}
+
+[HarmonyPatch(typeof(MegaLabel), "set_MaxFontSize")]
+public static class MegaLabelSetMaxFontSizePatch
+{
+    [HarmonyPrefix]
+    private static void Prefix(ref int value) => value = FontScaleState.Scale(value);
+}
+
 [HarmonyPatch(typeof(MegaRichTextLabel), "SetFontSize")]
 public static class MegaRichTextLabelSetFontSizePatch
 {
     [HarmonyPrefix]
     private static void Prefix(ref int size) => size = FontScaleState.Scale(size);
+}
+
+[HarmonyPatch(typeof(MegaRichTextLabel), "set_MinFontSize")]
+public static class MegaRichTextLabelSetMinFontSizePatch
+{
+    [HarmonyPrefix]
+    private static void Prefix(ref int value) => value = FontScaleState.Scale(value);
+}
+
+[HarmonyPatch(typeof(MegaRichTextLabel), "set_MaxFontSize")]
+public static class MegaRichTextLabelSetMaxFontSizePatch
+{
+    [HarmonyPrefix]
+    private static void Prefix(ref int value) => value = FontScaleState.Scale(value);
 }
 
 [HarmonyPatch(typeof(MegaLabel), nameof(MegaLabel._Ready))]
@@ -47,6 +77,13 @@ public static class NGameReadyPatch
 {
     [HarmonyPostfix]
     private static void Postfix(NGame __instance) => FontScaleState.HookGame(__instance);
+}
+
+[HarmonyPatch(typeof(NPreviewCardHolder), "Initialize")]
+public static class NPreviewCardHolderInitializePatch
+{
+    [HarmonyPostfix]
+    private static void Postfix(NCard card) => FontScaleState.ApplyPreviewCardDescriptionExtras(card);
 }
 
 [HarmonyPatch]

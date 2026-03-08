@@ -14,7 +14,15 @@ mkdir -p "${MOD_BUILD_DIR}"
 dotnet build "${MOD_PROJECT}" -c Release
 
 cp "${ROOT_DIR}/runtime_mod/Sts2FontSizeMod/bin/Release/net9.0/ZSts2FontSizeMod.dll" "${MOD_BUILD_DIR}/"
-cp "${ROOT_DIR}/runtime_mod/Sts2FontSizeMod/bin/Release/net9.0/font_size_config.json" "${MOD_BUILD_DIR}/"
+
+cat > "${MOD_BUILD_DIR}/font_size_config.json" <<EOF
+{
+  "base_scale": ${STS2_PATCH_SCALE},
+  "debug_footer_extra_scale": ${STS2_DEBUG_FOOTER_EXTRA_SCALE},
+  "patch_notes_extra_scale": ${STS2_PATCH_NOTES_EXTRA_SCALE},
+  "preview_card_description_extra_scale": ${STS2_PREVIEW_CARD_DESCRIPTION_EXTRA_SCALE:-0.20}
+}
+EOF
 
 if [[ -n "${STS2_GODOT_EXPORTER}" && -x "${STS2_GODOT_EXPORTER}" ]]; then
   "${STS2_GODOT_EXPORTER}" --headless --script "${MOD_PCK_SCRIPT}" -- "${MOD_BUILD_DIR}/ZSts2FontSizeMod.pck" "${MOD_MANIFEST_PATH}"
