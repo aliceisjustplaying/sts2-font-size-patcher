@@ -20,18 +20,26 @@ public static class MegaRichTextLabelSetFontSizePatch
     private static void Prefix(ref int size) => size = FontScaleState.Scale(size);
 }
 
-[HarmonyPatch(typeof(MegaLabel), "AdjustFontSize")]
-public static class MegaLabelAdjustFontSizePatch
+[HarmonyPatch(typeof(MegaLabel), nameof(MegaLabel._Ready))]
+public static class MegaLabelReadyPatch
 {
-    [HarmonyPrefix]
-    private static void Prefix(MegaLabel __instance) => FontScaleState.ApplyMegaLabelBase(__instance);
+    [HarmonyPostfix]
+    private static void Postfix(MegaLabel __instance)
+    {
+        FontScaleState.ApplyMegaLabelBase(__instance);
+        __instance.SetTextAutoSize(__instance.Text);
+    }
 }
 
-[HarmonyPatch(typeof(MegaRichTextLabel), "AdjustFontSize")]
-public static class MegaRichTextLabelAdjustFontSizePatch
+[HarmonyPatch(typeof(MegaRichTextLabel), nameof(MegaRichTextLabel._Ready))]
+public static class MegaRichTextLabelReadyPatch
 {
-    [HarmonyPrefix]
-    private static void Prefix(MegaRichTextLabel __instance) => FontScaleState.ApplyMegaRichTextBase(__instance);
+    [HarmonyPostfix]
+    private static void Postfix(MegaRichTextLabel __instance)
+    {
+        FontScaleState.ApplyMegaRichTextBase(__instance);
+        __instance.SetTextAutoSize(__instance.Text);
+    }
 }
 
 [HarmonyPatch(typeof(NGame), nameof(NGame._Ready))]
@@ -112,16 +120,16 @@ public static class RichTextPushDropcapPatch
                 typeof(string),
                 typeof(Font),
                 typeof(int),
-                typeof(Rect2),
-                typeof(InlineAlignment),
+                typeof(Rect2?),
+                typeof(Color?),
                 typeof(int),
-                typeof(Color)
+                typeof(Color?)
             ])!;
 
     [HarmonyPrefix]
-    private static void Prefix(ref int fontSize, ref int outlineSize)
+    private static void Prefix(ref int size, ref int outlineSize)
     {
-        fontSize = FontScaleState.Scale(fontSize);
+        size = FontScaleState.Scale(size);
         outlineSize = FontScaleState.Scale(outlineSize);
     }
 }

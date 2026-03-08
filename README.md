@@ -111,6 +111,57 @@ Use the repo helper:
 
 Then fully quit and relaunch the game.
 
+## Modded save migration
+
+If you use the `mods/` loader build, STS2 keeps profile-scoped saves in a separate modded namespace.
+
+Important distinction:
+
+- account-scoped files stay at the normal root
+  - `profile.save`
+  - `settings.save`
+- profile-scoped files move under `modded/profileN/`
+  - `progress.save`
+  - `prefs.save`
+  - `current_run.save`
+  - run history
+  - replays
+
+On Steam Deck, the two relevant roots are:
+
+- Steam cloud store:
+  - `~/.local/share/Steam/userdata/58189749/2868840/remote/`
+- local synced copy:
+  - `~/.local/share/SlayTheSpire2/steam/76561198018455477/`
+
+To migrate a normal `profile1` save into the modded namespace safely:
+
+```bash
+remote_root="$HOME/.local/share/Steam/userdata/58189749/2868840/remote"
+local_root="$HOME/.local/share/SlayTheSpire2/steam/76561198018455477"
+
+stamp=$(date +%Y%m%d-%H%M%S)
+backup_dir="$HOME/tmp/sts2-save-backups/modded-migrate-$stamp"
+
+mkdir -p "$backup_dir"
+cp -a "$remote_root/modded" "$backup_dir/remote-modded-before"
+cp -a "$local_root/modded" "$backup_dir/local-modded-before"
+
+mkdir -p "$remote_root/modded/profile1" "$local_root/modded/profile1"
+
+rsync -a --delete "$remote_root/profile1/" "$remote_root/modded/profile1/"
+rsync -a --delete "$remote_root/profile1/" "$local_root/modded/profile1/"
+
+cp -a "$remote_root/profile.save" "$remote_root/profile.save.backup" "$remote_root/settings.save" "$remote_root/settings.save.backup" "$remote_root/modded/"
+cp -a "$local_root/profile.save" "$local_root/profile.save.backup" "$local_root/settings.save" "$local_root/settings.save.backup" "$local_root/modded/"
+```
+
+Why both roots matter:
+
+- on startup, STS2 syncs cloud files into the local save directory
+- if the local modded profile tree is stale or blank, the next modded launch can regenerate a fresh empty `progress.save`
+- copying only the cloud tree is not enough; the local modded profile tree must match too
+
 ## Deployment safety
 
 Before copying patched DLLs to the Steam Deck, first check whether STS2 is currently running.

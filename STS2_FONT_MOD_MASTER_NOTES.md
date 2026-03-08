@@ -25,6 +25,108 @@ Make Slay the Spire 2 text significantly larger on Steam Deck with a generic pat
   - `"Until next turn, prevents damage."`
   - `"Unlocked by"`
 
+## Save Migration Findings
+
+- The plain game save is still the authoritative non-modded profile.
+- The `mods/` loader build uses a separate modded profile namespace.
+- This namespace split is only applied to profile-scoped data, not account-scoped data.
+
+Confirmed from managed save-path code:
+
+- account-scoped root stays normal:
+  - `user://steam/<steamid>/profile.save`
+  - `user://steam/<steamid>/settings.save`
+- profile-scoped root becomes modded when running mods:
+  - `user://steam/<steamid>/modded/profile1/...`
+
+In `UserDataPathProvider.GetProfileDir(int profileId)`:
+
+- non-modded => `profile1`
+- modded => `modded/profile1`
+
+In `ProgressSaveManager.LoadProgress()`:
+
+- the game only falls back to `ProgressState.CreateDefault()` when loading the modded `progress.save` fails or returns null
+- it does not reject a modded save merely because it is in the modded namespace
+
+Practical implication:
+
+- if the modded `progress.save` is blank on launch, the real problem is usually sync/state mismatch, not the folder name itself
+
+## Validated Save Migration Procedure
+
+The migration that finally worked was:
+
+1. Back up everything first.
+2. Copy normal `profile1/` into both:
+   - Steam cloud modded root
+   - local synced modded root
+3. Copy top-level `profile.save` and `settings.save` into the `modded/` subdirectory in both roots.
+4. Verify hashes match before launching modded STS2.
+
+Steam cloud root:
+
+- `~/.local/share/Steam/userdata/58189749/2868840/remote/`
+
+Local synced root:
+
+- `~/.local/share/SlayTheSpire2/steam/76561198018455477/`
+
+Safe migration commands:
+
+```bash
+remote_root="$HOME/.local/share/Steam/userdata/58189749/2868840/remote"
+local_root="$HOME/.local/share/SlayTheSpire2/steam/76561198018455477"
+
+stamp=$(date +%Y%m%d-%H%M%S)
+backup_dir="$HOME/tmp/sts2-save-backups/modded-migrate-$stamp"
+
+mkdir -p "$backup_dir"
+cp -a "$remote_root/modded" "$backup_dir/remote-modded-before"
+cp -a "$local_root/modded" "$backup_dir/local-modded-before"
+
+mkdir -p "$remote_root/modded/profile1" "$local_root/modded/profile1"
+
+rsync -a --delete "$remote_root/profile1/" "$remote_root/modded/profile1/"
+rsync -a --delete "$remote_root/profile1/" "$local_root/modded/profile1/"
+
+cp -a "$remote_root/profile.save" "$remote_root/profile.save.backup" "$remote_root/settings.save" "$remote_root/settings.save.backup" "$remote_root/modded/"
+cp -a "$local_root/profile.save" "$local_root/profile.save.backup" "$local_root/settings.save" "$local_root/settings.save.backup" "$local_root/modded/"
+```
+
+Hash verification used after migration:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import hashlib
+
+checks = [
+    ("remote progress", Path.home()/".local/share/Steam/userdata/58189749/2868840/remote/profile1/saves/progress.save",
+     Path.home()/".local/share/Steam/userdata/58189749/2868840/remote/modded/profile1/saves/progress.save"),
+    ("local modded progress", Path.home()/".local/share/Steam/userdata/58189749/2868840/remote/profile1/saves/progress.save",
+     Path.home()/".local/share/SlayTheSpire2/steam/76561198018455477/modded/profile1/saves/progress.save"),
+]
+
+for label, a, b in checks:
+    ah = hashlib.sha256(a.read_bytes()).hexdigest()[:16]
+    bh = hashlib.sha256(b.read_bytes()).hexdigest()[:16]
+    print(label, ah == bh, a.stat().st_size, b.stat().st_size, ah, bh)
+PY
+```
+
+Observed good state after fix:
+
+- normal `progress.save`: `90063` bytes
+- modded remote `progress.save`: `90063` bytes
+- modded local `progress.save`: `90063` bytes
+
+Why the earlier migration failed:
+
+- only part of the modded namespace was copied at first
+- the local modded profile tree was left inconsistent
+- on the next modded launch, STS2 wrote a fresh blank modded `progress.save`
+
 ## Deployment Safety
 
 - Before copying patched DLLs to the Steam Deck, first check whether STS2 is currently running.
