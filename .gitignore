@@ -3,14 +3,13 @@
 **/obj/
 **/.godot/
 **/project.binary
-patcher/StsFontRuntimeHelper/
+runtime_mod/build/
 
 # Local configuration
 .env
 .env.local
 
-# Local game binaries and backups
-game_dlls/
+# Local binaries and backups
 *.dll
 *.dll.bak
 *.dll.orig

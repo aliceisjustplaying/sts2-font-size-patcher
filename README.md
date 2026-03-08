@@ -1,119 +1,85 @@
-# Slay the Spire 2 Font Size Patch for Steam Deck
+# Slay the Spire 2 Font Size Runtime Mod
 
 Last updated: 2026-03-08
 
-## What this patch does
+This repo tracks the `mods/`-loader version of the STS2 font-size patch.
 
-This is a managed-DLL font patch for the Steam Deck version of Slay the Spire 2.
+What it changes:
 
-It increases text size in the game's three main managed text paths:
+- scales `MegaLabel`
+- scales `MegaRichTextLabel`
+- scales plain Godot `Label` / `RichTextLabel`
+- scales BBCode font-size paths in `Godot.RichTextLabel`
+- adds a footer-only bump for the version/build text
+- adds a patch-notes-only bump for the release notes screen
 
-- `MegaLabel`
-- `MegaRichTextLabel`
-- plain Godot `Label` / `RichTextLabel`
+Current config defaults:
 
-It also scales inline rich-text size directives like:
+- base scale: `1.20x`
+- debug footer extra: `0.50`
+- patch notes extra: `0.25`
 
-- `font_size=...`
-- `outline_size=...`
+## Repo layout
 
-This is the current clean patch shape:
-
-- patched `sts2.dll`
-- patched `GodotSharp.dll`
-- no helper DLL
-- no `override.cfg`
-- debug footer now shows `[version + Font Patch 1.20x] [date]`
-- patch notes body text gets an extra release-notes-only bump on top of the base scale
+- `runtime_mod/Sts2FontSizeMod/`
+  - Harmony runtime mod source
+- `runtime_mod/pck/`
+  - minimal Godot pack content for the mod loader
+- `runtime_mod/tools/`
+  - helper scripts for building and inspecting the `.pck`
+- `scripts/build-runtime-mod.sh`
+  - builds the mod DLL and `.pck`
+- `scripts/deploy-runtime-mod.sh`
+  - installs the mod into the Deck `mods/` folder
+- `scripts/package-runtime-mod.sh`
+  - zips the runtime-mod artifacts
+- `scripts/check-running.sh`
+  - checks whether STS2 is running on the target Deck
+- `scripts/fetch-log.sh`
+  - copies back the Deck Godot log for debugging
 
 ## Configuration
 
-Copy `.env.example` to `.env` and adjust it for your machine:
+Copy `.env.example` to `.env` and adjust it for your machine.
+
+Current env vars used by the runtime-mod workflow:
 
 - `STS2_DECK_HOST`
-- `STS2_GAME_DLL_DIR`
+- `STS2_MODS_DIR`
 - `STS2_LOG_PATH`
-- `STS2_LOCAL_DLL_DIR`
+- `STS2_GODOT_EXPORTER`
 - `STS2_PATCH_SCALE`
 - `STS2_DEBUG_FOOTER_EXTRA_SCALE`
 - `STS2_PATCH_NOTES_EXTRA_SCALE`
+- `STS2_RUNNING_PATTERN`
 
-The helper scripts in `./scripts` read `.env` automatically.
-Quote any value that contains spaces, such as the Steam install path or process-match pattern.
+Quote any value that contains spaces.
 
-## Current scale factor
-
-- `1.20x`
-- debug footer/version labels get an extra footer-only bump to `1.70x`
-- patch notes body text gets an extra release-notes-only bump to `1.45x`
-
-## Why this version is better than the earlier attempts
-
-The early versions were a mix of:
-
-- direct `SetFontSize(...)` scaling
-- plain Godot label scaling
-- a one-off character-select fix
-- a temporary engine patch that depended on an external helper DLL
-
-The current version keeps the useful generic parts and removes the brittle parts:
-
-- `MegaLabel.SetFontSize(...)` and `MegaRichTextLabel.SetFontSize(...)` are scaled
-- `MegaLabel._Ready()` now applies a generic scaled `font_size` theme override
-- `MegaRichTextLabel._Ready()` now applies generic scaled rich-text base overrides:
-  - `normal_font_size`
-  - `bold_font_size`
-  - `italics_font_size`
-  - `bold_italics_font_size`
-  - `mono_font_size`
-- `NGame._Ready()` still scales plain Godot labels and rich-text labels globally
-- `GodotSharp.dll` still scales BBCode and direct rich-text size pushes globally
-- the version/build footer is patched through `NDebugInfoLabelManager.UpdateText(...)` so it uses the same scaled `MegaLabel` path
-- the patch notes screen body text is patched through `NPatchNotesScreen._patchText` so release notes can get a small extra bump without affecting other `MegaRichTextLabel` screens
-
-That means the patch now covers:
-
-- most menus
-- character select text
-- hover tips
-- unlock text
-- speech / thought bubbles
-- other `MegaRichTextLabel`-based UI that was previously slipping through
-
-## Files to replace on Steam Deck
-
-Copy these two files into:
-
-`~/.steam/steam/steamapps/common/Slay the Spire 2/data_sts2_linuxbsd_x86_64/`
-
-Files:
-
-- `sts2.dll`
-- `GodotSharp.dll`
-
-## Back up first
-
-From the Steam Deck:
+## Build
 
 ```bash
-cd ~/.steam/steam/steamapps/common/Slay\ the\ Spire\ 2/data_sts2_linuxbsd_x86_64/
-cp sts2.dll sts2.dll.orig
-cp GodotSharp.dll GodotSharp.dll.orig
+./scripts/build-runtime-mod.sh
 ```
 
-## Install
+This produces build artifacts in `runtime_mod/build/`.
 
-Use the repo helper:
+## Deploy
 
 ```bash
-./scripts/deploy.sh
+./scripts/deploy-runtime-mod.sh
 ```
 
-Then fully quit and relaunch the game.
+The deploy helper refuses to overwrite files if STS2 is running.
+
+Suggested check:
+
+```bash
+./scripts/check-running.sh
+```
 
 ## Modded save migration
 
-If you use the `mods/` loader build, STS2 keeps profile-scoped saves in a separate modded namespace.
+When STS2 runs through the mod loader, profile-scoped saves move into a separate modded namespace.
 
 Important distinction:
 
@@ -134,7 +100,7 @@ On Steam Deck, the two relevant roots are:
 - local synced copy:
   - `~/.local/share/SlayTheSpire2/steam/76561198018455477/`
 
-To migrate a normal `profile1` save into the modded namespace safely:
+Validated migration flow:
 
 ```bash
 remote_root="$HOME/.local/share/Steam/userdata/58189749/2868840/remote"
@@ -158,63 +124,13 @@ cp -a "$local_root/profile.save" "$local_root/profile.save.backup" "$local_root/
 
 Why both roots matter:
 
-- on startup, STS2 syncs cloud files into the local save directory
-- if the local modded profile tree is stale or blank, the next modded launch can regenerate a fresh empty `progress.save`
-- copying only the cloud tree is not enough; the local modded profile tree must match too
+- STS2 syncs cloud files into the local save directory on startup
+- copying only the cloud tree is not enough
+- the local modded profile tree must match too, or the next modded launch can regenerate a fresh blank `progress.save`
 
-## Deployment safety
-
-Before copying patched DLLs to the Steam Deck, first check whether STS2 is currently running.
-
-If the game is running, ask before overwriting the live install.
-
-Suggested check:
-
-```bash
-./scripts/check-running.sh
-```
-
-## Revert
-
-Either restore the backups:
-
-Restore the backups you made on the Deck, or use Steam's file verification.
-
-## Rebuild the patch locally
-
-Rebuild:
-
-```bash
-./scripts/rebuild.sh
-```
-
-## Repository contents
-
-Tracked in git:
-
-- patcher source
-- helper inspection tool source
-- `.env.example`
-- helper scripts
-- project docs / notes
-
-Ignored in git:
-
-- copied game DLLs
-- backups
-- generated disassembly / scan output
-- local release zips
-
-## Known limitations
-
-- The game content `.pck` is encrypted, so scene/resource extraction is not the current path.
-- Some rare text may still be custom-drawn or otherwise outside the managed label pipeline.
-- Game updates will overwrite these DLLs.
-
-## Technical summary
+## Notes
 
 - Engine: Godot 4.5.1 Mono
 - App ID: `2868840`
-- Main game assembly: `sts2.dll`
-- Managed engine assembly: `GodotSharp.dll`
-- Patcher tech: Mono.Cecil
+- The game content `.pck` is encrypted, so asset extraction is not the current path.
+- The older direct-DLL patcher workflow has been archived outside this repo.
