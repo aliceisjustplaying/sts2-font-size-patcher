@@ -15,6 +15,13 @@
     <Sts2DataDir Condition="'$(Sts2DataDir)' == ''">$(RepoRoot)game_dlls</Sts2DataDir>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>$(Sts2DataDir)/0Harmony.dll</HintPath>
