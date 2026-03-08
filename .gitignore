@@ -1,0 +1,32 @@
+# Build output
+**/bin/
+**/obj/
+patcher/StsFontRuntimeHelper/
+
+# Local game binaries and backups
+game_dlls/
+*.dll
+*.dll.bak
+*.dll.orig
+*.dll.patched
+
+# Generated archives / release bundles
+release/
+*.zip
+
+# Investigation output
+*.dis
+*.log
+all_types.txt
+deck_godot.log
+findlabels_dump.txt
+ilspy_err.log
+label_callsites.txt
+types_font.txt
+
+# Local scratch / saves
+76561199179429067/
+test_patch/
+
+# Editor / scratch files
+*.save
