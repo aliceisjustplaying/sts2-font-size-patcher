@@ -25,6 +25,13 @@ More complete user-facing notes for the STS2 font-size runtime mod.
 
 The workflow reads `.env` and renders those values into `runtime_mod/build/font_size_config.json` during build.
 
+Important behavior:
+
+- the runtime mod reads `font_size_config.json` at launch
+- scale-only tuning does not require rebuilding the DLL
+- if you rebuild, the build script will regenerate `font_size_config.json` from `.env`
+- if you want a quick live tweak, edit the deployed `font_size_config.json` directly
+
 Useful env vars:
 
 - `STS2_DECK_HOST`

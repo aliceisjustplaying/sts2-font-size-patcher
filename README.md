@@ -55,6 +55,8 @@ For deeper notes, save migration, and troubleshooting, see [GUIDE.md](GUIDE.md).
 
 ## Values You Probably Want To Change
 
+The runtime mod reads `font_size_config.json` at launch, so changing these scale values does not require rebuilding the DLL. You can either edit `.env` and rebuild to regenerate the file, or edit the deployed `font_size_config.json` directly.
+
 In `.env`:
 
 - `STS2_PATCH_SCALE`
@@ -112,4 +114,5 @@ Fetch the Deck log:
 
 - Build output goes to `runtime_mod/build/`.
 - `font_size_config.json` is generated from your current `.env` values during build.
+- Scale-only tweaks can be done without rebuilding by editing the deployed `font_size_config.json` directly.
 - The deploy script refuses to overwrite live mod files if STS2 is running.
